@@ -1,0 +1,16 @@
+---
+###
+# Yum repositories
+###
+
+- name: Install PostgreSQL Yum repository RPM
+  yum: name=http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm state=present
+
+###
+# Dependencies
+###
+
+- name: Install Ansible dependencies
+  yum: name={{ item }} state=present
+  with_items:
+    - libselinux-python

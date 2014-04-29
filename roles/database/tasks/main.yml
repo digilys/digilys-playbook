@@ -1,0 +1,20 @@
+---
+###
+# PostgreSQL
+###
+
+- name: Install PostgreSQL 9.2
+  yum: name={{ item }} state=present
+  with_items:
+    - postgresql92
+    - postgresql92-server
+
+- name: Initialize PostgreSQL database
+  command: service postgresql-9.2 initdb sv_SE.utf8 creates=/var/lib/pgsql/9.2/data/PG_VERSION
+
+- name: Add pg_hba.conf
+  copy: src=pg_hba.conf dest=/var/lib/pgsql/9.2/data/pg_hba.conf owner=postgres group=postgres mode=600
+  notify: Restart PostgreSQL
+
+- name: Enable PostgreSQL service
+  service: name=postgresql-9.2 enabled=yes state=started
