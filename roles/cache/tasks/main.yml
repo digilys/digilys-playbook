@@ -1,0 +1,17 @@
+---
+
+###
+# Memcached
+###
+
+- name: Install Memcached
+  yum: name=memcached state=present
+
+- name: Set Memcached cache size
+  lineinfile: dest=/etc/sysconfig/memcached
+              regexp='^CACHESIZE='
+              line='CACHESIZE="512"'
+  notify: Restart Memcached
+
+- name: Enable Memcached service
+  service: name=memcached enabled=yes state=started

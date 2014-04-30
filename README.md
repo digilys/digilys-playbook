@@ -40,6 +40,8 @@ This playbook defines the following roles:
     * Initializes PostgreSQL collated with `sv_SE.utf8`
     * Adds a `pg_hba.conf`, see `roles/database/files/pg_hba.conf`
     * Creates databases and database users for the application instances
+* `cache`
+    * Installes Memcached with a 512 GB cache size
 * `application`
     * Installs rbenv globally, along with ruby-build
     * Installs any Ruby version specified in `group_all/all`
