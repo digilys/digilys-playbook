@@ -1,0 +1,7 @@
+---
+
+- name: Load iptables
+  shell: iptables-restore < /etc/sysconfig/iptables
+
+- name: Reload nginx
+  service: name=nginx state=reloaded

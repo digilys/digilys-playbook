@@ -19,6 +19,14 @@ application:
       db_password: digilys
       # The port Passenger listens on, needs to be unique per instance
       passenger_port: 24500
+      # The instance's hostname, used in the nginx config
+      hostname: digilys.example.com
+      # SSL configuration, optional
+      ssl:
+        # Key and certificate, these need to be added to the certificates
+        # folder in the playbook
+        key: certificate_name.key
+        certificate: certificate_name.crt
 
     # Another instance:
     # - name: digilys2

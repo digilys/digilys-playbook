@@ -54,6 +54,14 @@ This playbook defines the following roles:
         * A `passenger_port.txt` file for defining Passenger's port
         * A start script `start-digilys-instance.sh` which can start the
           application on boot
+* `web`
+    * Configures iptables for web access
+    * Installs nginx as a web frontend
+    * Installs a robot.txt that disallows indexing
+    * Uploads any SSL certificates found in `certificates`, see About SSL
+      certificates below for further information.
+    * Creates nginx configurations for all Digilys instances, proxying to
+      Passenger. Support for SSL certificates is included.
 
 ## About SSH keys
 
@@ -65,6 +73,12 @@ keys authorized.
 This playbook automatically adds any public key found in `public_keys/` to the
 application accounts on the application servers. So, to grant someone deployment
 access, just add their SSH key to `public_keys/` and run the playbook.
+
+## About SSL certificates
+
+The playbook has support for adding SSL to Digilys. In order to enable SSL for
+an instance, add the SSL certificate and key to `certificates/`, configure SSL
+details in `group_vars/all` and run the playbook.
 
 ## Limitations
 

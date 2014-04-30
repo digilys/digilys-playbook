@@ -1,0 +1,60 @@
+---
+
+###
+# iptables
+###
+
+- name: Add iptables configuration
+  copy: src=iptables
+        dest=/etc/sysconfig/iptables
+        owner=root
+        group=root
+        mode=600
+  notify: Load iptables
+
+
+###
+# SSL certificates
+###
+
+- name: Add SSL certificates
+  copy: src={{ item }}
+        dest=/etc/pki/tls/certs/
+        owner=root
+        group=root
+        mode=644
+  with_fileglob:
+    - ../../../certificates/*.crt
+    - ../../../certificates/*.pem
+
+- name: Add SSL keys and signing requests
+  copy: src={{ item }}
+        dest=/etc/pki/tls/private/
+        owner=root
+        group=root
+        mode=600
+  with_fileglob:
+    - ../../../certificates/*.key
+    - ../../../certificates/*.csr
+
+###
+# nginx
+###
+
+- name: Install PostgreSQL Yum repository RPM
+  yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+
+- name: Install nginx
+  yum: name=nginx state=present
+
+- name: Add nginx configuration for the Digilys instances
+  template: src=nginx.conf.j2
+            dest=/etc/nginx/conf.d/{{ item.hostname }}.conf
+            owner=root
+            group=root
+            mode=644
+  with_items: application.instances
+  notify: Reload nginx
+
+- name: Enable nginx service
+  service: name=nginx enabled=yes state=started
