@@ -1,0 +1,3 @@
+---
+- name: rbenv rehash
+  shell: RBENV_ROOT=/usr/local/rbenv /usr/local/bin/rbenv rehash

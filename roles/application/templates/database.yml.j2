@@ -1,0 +1,8 @@
+production:
+  adapter: postgresql
+  database: {{ item.name }}
+  username: {{ item.name }}
+  password: {{ item.db_password }}
+  encoding: utf8
+  host: localhost
+  port: 5432

@@ -1,0 +1,159 @@
+---
+
+###
+# rbenv
+###
+
+- name: Install rbenv
+  git: repo=https://github.com/sstephenson/rbenv.git dest=/usr/local/rbenv
+
+- name: Add rbenv to path
+  file: path=/usr/local/bin/rbenv src=/usr/local/rbenv/bin/rbenv state=link
+
+- name: Add rbenv initialization to profile
+  copy: src=rbenv.sh dest=/etc/profile.d/rbenv.sh owner=root group=root mode=0755
+
+- name: Creates rbenv plugin directory
+  file: path=/usr/local/rbenv/plugins/ owner=root group=root mode=0755 state=directory
+
+
+###
+# ruby-build
+###
+
+- name: Install ruby-build dependencies
+  yum: name={{ item }} state=present
+  with_items:
+    - gcc-c++
+    - glibc-headers
+    - openssl-devel
+    - readline
+    - libyaml-devel
+    - readline-devel
+    - zlib
+    - zlib-devel
+
+- name: Install ruby-build
+  git: repo=https://github.com/sstephenson/ruby-build.git
+       dest=/usr/local/rbenv/plugins/ruby-build
+
+- name: Install ruby versions
+  shell: RBENV_ROOT=/usr/local/rbenv rbenv install {{ item }}
+         creates=/usr/local/rbenv/versions/{{ item }}
+  with_items: ruby.versions
+
+- name: Set global ruby version
+  # The shell line tests if the current global ruby version is the one requested
+  # and sets the global if not
+  shell: test `RBENV_ROOT=/usr/local/rbenv rbenv global` = {{ ruby.global_version }} && echo "no change" || RBENV_ROOT=/usr/local/rbenv rbenv global {{ ruby.global_version }}
+  register: ruby_global_result
+  changed_when: "ruby_global_result.stdout != 'no change'"
+
+
+###
+# Gems
+###
+
+- name: Install Gem dependencies
+  yum: name={{ item }} state=present
+  with_items:
+    - postgresql92-devel
+    - libxml2-devel
+    - libxslt-devel
+
+- name: Add PostgreSQL bin path to profile
+  copy: dest=/etc/profile.d/postgres92.sh
+        content="export PATH=$PATH:/usr/pgsql-9.2/bin"
+        owner=root
+        group=root
+        mode=0755
+
+- name: Install bundler
+  # Installs bundler unless it's already installed
+  shell: '/usr/local/rbenv/shims/gem list bundler | grep -q bundler && echo "no change" || /usr/local/rbenv/shims/gem install bundler'
+  register: bundler_install_result
+  changed_when: "bundler_install_result.stdout != 'no change'"
+  notify: rbenv rehash
+
+
+###
+# Application instances
+###
+
+- name: Create application instance users
+  user: name={{ item.name }} shell=/bin/bash
+  with_items: application.instances
+
+# Does the same thing as with_fileglob, but manually since we
+# need to use with_nested below
+- name: Find public keys
+  local_action: shell ls public_keys
+  register: public_keys
+  changed_when: false
+
+- name: Add public keys to the application instance user's authorized keys
+  authorized_key: user={{ item[0].name }}
+                  key="{{lookup('file','../../../public_keys/'+item[1])}}"
+  with_nested:
+    - application.instances
+    - public_keys.stdout_lines
+
+- name: Create application shared directory
+  file: path=/home/{{ item.name }}/app/shared/config state=directory
+  sudo: true
+  sudo_user: "{{ item.name }}"
+  with_items: application.instances
+
+- name: Add application database.yml
+  template: src=database.yml.j2
+            dest=/home/{{ item.name }}/app/shared/config/database.yml
+            owner={{ item.name }}
+            group={{ item.name }}
+            mode=0600
+  with_items: application.instances
+
+- name: Add Passenger port file
+  template: src=passenger_port.txt.j2
+            dest=/home/{{ item.name }}/app/shared/config/passenger_port.txt
+            owner={{ item.name }}
+            group={{ item.name }}
+            mode=0600
+  with_items: application.instances
+
+- name: Add application app_config.private.yml
+  # Use Ruby's secure random to generate a secret_token
+  shell: "/usr/local/rbenv/shims/ruby -e 'require \"securerandom\"; puts %(secret_token: \"#{SecureRandom.hex(64)}\"\n)' > /home/{{ item.name }}/app/shared/config/app_config.private.yml
+          creates=/home/{{ item.name }}/app/shared/config/app_config.private.yml"
+  with_items: application.instances
+
+- name: Set app_config.private.yml attributes
+  file: path=/home/{{ item.name }}/app/shared/config/app_config.private.yml
+        owner={{ item.name }}
+        group={{ item.name }}
+        mode=0600
+  with_items: application.instances
+
+- name: Add start script for the application
+  template: src=start-digilys-instance.sh.j2
+            dest=/home/{{ item.name }}/start-digilys-instance.sh
+            owner={{ item.name }}
+            group={{ item.name }}
+            mode=0700
+  with_items: application.instances
+
+
+###
+# Instance startup script
+###
+
+- name: Add the instance startup script
+  copy: src=start-digilys-instances.sh
+        dest=/usr/local/bin/start-digilys-instances.sh
+        owner=root
+        group=root
+        mode=0755
+
+- name: Add the instance startup script to rc.local
+  lineinfile: dest=/etc/rc.local
+              state=present
+              line="/bin/sh /usr/local/bin/start-digilys-instances.sh"

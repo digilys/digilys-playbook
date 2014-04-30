@@ -6,6 +6,9 @@
 - name: Install PostgreSQL Yum repository RPM
   yum: name=http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-6.noarch.rpm state=present
 
+- name: Install EPEL Yum repository RPM
+  yum: name=http://ftp.acc.umu.se/mirror/fedora/epel/6/x86_64/epel-release-6-8.noarch.rpm state=present
+
 ###
 # Dependencies
 ###

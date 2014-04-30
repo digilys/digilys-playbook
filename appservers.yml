@@ -1,0 +1,5 @@
+---
+- hosts: appservers
+  remote_user: root
+  roles:
+    - application

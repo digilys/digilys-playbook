@@ -1,4 +1,9 @@
 ---
+- name: Install Ansible PostgreSQL dependencies
+  yum: name={{ item }} state=present
+  with_items:
+    - python-psycopg2
+
 ###
 # PostgreSQL
 ###
@@ -18,3 +23,23 @@
 
 - name: Enable PostgreSQL service
   service: name=postgresql-9.2 enabled=yes state=started
+
+
+###
+# PostgreSQL databases and users
+###
+
+- name: Create application databases
+  postgresql_db: name={{ item.name }}
+  sudo: true
+  sudo_user: postgres
+  with_items: application.instances
+
+- name: Create application database users
+  postgresql_user: name={{ item.name }}
+                   password={{ item.db_password }}
+                   db={{ item.name }}
+                   encrypted=false
+  sudo: true
+  sudo_user: postgres
+  with_items: application.instances

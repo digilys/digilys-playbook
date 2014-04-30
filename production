@@ -1,2 +1,5 @@
 [dbservers]
 digilys
+
+[appservers]
+digilys

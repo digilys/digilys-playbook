@@ -1,0 +1,37 @@
+---
+###
+# Configuration for the playbook. Copy this file to group_vars/all and
+# configure as needed for the server.
+#
+# The configuration is documented extensively below
+###
+
+# Application server configuration
+application:
+
+  # Digilys instances. It's possible to run multiple instances on a single
+  # server by adding multiple definitions below.
+  instances:
+    # The name is used for the user account and the database
+    - name: digilys
+      # The password is used for the database
+      # Please change this to something strong
+      db_password: digilys
+      # The port Passenger listens on, needs to be unique per instance
+      passenger_port: 24500
+
+    # Another instance:
+    # - name: digilys2
+    #   password: digilys2
+    #   passenger_port: 24501
+
+# Ruby stack configuration
+ruby:
+  # The global Ruby version (rbenv global)
+  global_version: 2.1.1
+
+  # All Ruby versions installed
+  versions:
+    - 2.1.1
+
+# vim:ft=yaml
