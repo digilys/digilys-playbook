@@ -1,6 +1,13 @@
 ---
 
 ###
+# git
+###
+- name: Install git
+  yum: name=git state=present
+
+
+###
 # rbenv
 ###
 
